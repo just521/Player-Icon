@@ -103,6 +103,7 @@ async function loadTraktUserList(params = {}) {
         Widget.storage.set("trakt_client_id", traktClientId);
     } catch(err) {}
 
+    const errors = [];
     // 格式化 slug 用作直接查询的备用
     const formattedSlug = listSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
@@ -113,7 +114,7 @@ async function loadTraktUserList(params = {}) {
             return await parseTraktUserItems(rawData, traktClientId, page);
         }
     } catch (e) {
-        // 直接获取失败，转为全局搜索
+        errors.push(`[直接获取] ${e.message || e}`);
     }
 
     // 2. 全局搜索该列表，找到对应的创建者及列表 ID
@@ -125,21 +126,31 @@ async function loadTraktUserList(params = {}) {
                 const owner = match.user.username;
                 const listId = match.ids.trakt;
                 console.log(`[Trakt Search] Found list "${match.name}" owned by "${owner}", fetching items...`);
-                const rawData = await fetchTraktUserApi(`users/${owner}/lists/${listId}/items`, traktClientId, page);
-                if (rawData && rawData.length > 0) {
-                    return await parseTraktUserItems(rawData, traktClientId, page);
+                try {
+                    const rawData = await fetchTraktUserApi(`users/${owner}/lists/${listId}/items`, traktClientId, page);
+                    if (rawData && rawData.length > 0) {
+                        return await parseTraktUserItems(rawData, traktClientId, page);
+                    } else {
+                        errors.push(`[数据] 列表为空或无返回项`);
+                    }
+                } catch (fetchErr) {
+                    errors.push(`[拉取列表] ${fetchErr.message || fetchErr}`);
                 }
+            } else {
+                errors.push(`[搜索解析] 结构不完整`);
             }
+        } else {
+            errors.push(`[搜索结果] 未找到名为 "${listSlug}" 的列表`);
         }
     } catch (err) {
-        console.error("[Trakt Search Error]", err);
+        errors.push(`[全局搜索] ${err.message || err}`);
     }
 
     return [{
         id: "empty",
         type: "text",
         title: "⚠️ 列表加载失败",
-        description: `无法加载列表 "${listSlug}"。请确保列表名称正确且已公开。`
+        description: `错误排查日志:\n${errors.join("\n")}`
     }];
 }
 
