@@ -118,7 +118,7 @@ async function loadTraktUserList(params = {}) {
 
     // 2. 全局搜索该列表，找到对应的创建者及列表 ID
     try {
-        const searchResults = await fetchTraktUserApi(`search/list?query=${encodeURIComponent(listSlug)}`, traktClientId, page);
+        const searchResults = await fetchTraktUserApi(`search/list?query=${encodeURIComponent(listSlug)}`, traktClientId, 1);
         if (searchResults && searchResults.length > 0) {
             const match = searchResults[0].list;
             if (match && match.user && match.ids) {
