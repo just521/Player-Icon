@@ -1,12 +1,12 @@
 /**
  * 
- * 自动获取并展示 Trakt 公开列表的内容 
+ * 自动获取并展示Trakt公开列表的内容 
  */
 
 WidgetMetadata = {
     id: "trakt_user_widget",
     title: "Trakt 热门列表",
-    description: "展示 Trakt 点赞列表或任意公开列表的内容",
+    description: "展示Trakt公开列表的内容",
     author: "love00",
     site: "https://app.trakt.tv/search?m=lists",
     version: "1.0.0",
