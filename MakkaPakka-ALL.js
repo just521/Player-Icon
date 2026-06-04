@@ -409,7 +409,7 @@ async function loadDetail(link) {
             return {
                 id: link,
                 type: "url",
-                title: "Trakt 列表详情",
+                title: "Trakt列表详情",
                 link: link,
                 childItems: items,
                 relatedItems: items
