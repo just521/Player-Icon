@@ -80,6 +80,7 @@ function getGlobalGenreText(ids) {
 async function fetchTraktUserApi(endpoint, traktClientId, page) {
     const limit = 20;
     const url = `https://api.trakt.tv/${endpoint}${endpoint.includes("?") ? "&" : "?"}limit=${limit}&page=${page}`;
+    console.log(`[Trakt Debug] fetching endpoint: ${endpoint}, using client ID: "${traktClientId}"`);
     const headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Content-Type": "application/json",
@@ -99,7 +100,14 @@ async function loadTraktUserList(params = {}) {
     const username = params.username || "love00";
     const category = params.category || "watchlist";
     const page = params.page || 1;
-    const traktClientId = params.traktClientId || DEFAULT_TRAKT_ID;
+    
+    let traktClientId = params.traktClientId;
+    if (!traktClientId || traktClientId === "null" || traktClientId === "undefined" || String(traktClientId).trim() === "") {
+        traktClientId = DEFAULT_TRAKT_ID;
+    }
+    try {
+        Widget.storage.set("trakt_client_id", traktClientId);
+    } catch(err) {}
 
     try {
         if (category === "watchlist") {
@@ -221,9 +229,13 @@ async function loadDetail(link) {
         const parts = link.split(":");
         const username = parts[1];
         const listId = parts[2];
+        let traktClientId = DEFAULT_TRAKT_ID;
         try {
-            const rawData = await fetchTraktUserApi(`users/${username}/lists/${listId}/items`, DEFAULT_TRAKT_ID, 1);
-            const items = await parseTraktUserItems(rawData, DEFAULT_TRAKT_ID, 1);
+            traktClientId = Widget.storage.get("trakt_client_id") || DEFAULT_TRAKT_ID;
+        } catch(err) {}
+        try {
+            const rawData = await fetchTraktUserApi(`users/${username}/lists/${listId}/items`, traktClientId, 1);
+            const items = await parseTraktUserItems(rawData, traktClientId, 1);
             return {
                 id: link,
                 type: "url",
