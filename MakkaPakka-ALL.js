@@ -33,15 +33,7 @@ var WidgetMetadata = {
     requiredVersion: "0.0.1",
     site: "",
 
-    globalParams: [
-        {
-            name: "traktClientId",
-            title: "Trakt Client ID",
-            type: "input",
-            description: "选填，不填则使用内置。Trakt 榜单专用。",
-            value: ""
-        }
-    ],
+
 
     modules: [
 
