@@ -1,62 +1,46 @@
 /**
- * 玛卡巴卡 Trakt 用户数据 Forward Widget
- * 自动获取并展示 Trakt 公开列表的内容 (支持全局模糊搜索与所有者定位)
+ * 
+ * 自动获取并展示 Trakt 公开列表的内容 
  */
 
 WidgetMetadata = {
-  id: "trakt_user_widget",
-  title: "Trakt用户数据",
-  description: "展示 Trakt 点赞列表或任意公开列表的内容",
-  author: "𝙈𝙖𝙠𝙠𝙖𝙋𝙖𝙠𝙠𝙖",
-  site: "https://t.me/MakkaPakkaOvO",
-  version: "1.0.2",
-  requiredVersion: "0.0.1",
-  
-  globalParams: [
-    {
-      name: "traktClientId",
-      title: "Trakt Client ID",
-      type: "input",
-      description: "选填，不填则使用内置。",
-      value: ""
-    }
-  ],
-  
-  modules: [
-    {
-      title: "Trakt 列表内容",
-      functionName: "loadTraktUserList",
-      type: "video",
-      cacheDuration: 3600,
-      params: [
+    id: "trakt_user_widget",
+    title: "Trakt用户数据",
+    description: "展示 Trakt 点赞列表或任意公开列表的内容",
+    author: "love00",
+    site: "https://app.trakt.tv/search?m=lists",
+    version: "1.0.0",
+    requiredVersion: "0.0.1",
+
+    modules: [
         {
-          name: "username",
-          title: "用户账户 (如 love00)",
-          type: "input",
-          value: "love00"
-        },
-        {
-          name: "listSlug",
-          title: "列表名称/英文标识",
-          type: "input",
-          value: "MARVEL Cinematic Universe"
-        },
-        {
-          name: "page",
-          title: "页码",
-          type: "page",
-          startPage: 1
+            title: "Trakt 列表内容",
+            functionName: "loadTraktUserList",
+            type: "video",
+            cacheDuration: 3600,
+            params: [
+                {
+                    name: "listSlug",
+                    title: "列表名称/标识",
+                    type: "input",
+                    value: "imdb-top-rated-movies"
+                },
+                {
+                    name: "page",
+                    title: "页码",
+                    type: "page",
+                    startPage: 1
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 };
 
 const DEFAULT_TRAKT_ID = "95b59922670c84040db3632c7aac6f33704f6ffe5cbf3113a056e37cb45cb482";
 
 const GLOBAL_GENRE_MAP_ALL = {
-    16: "动画", 10759: "动作冒险", 35: "喜剧", 18: "剧情", 14: "奇幻", 878: "科幻", 9648: "悬疑", 
-    10749: "爱情", 27: "恐怖", 10765: "科幻奇幻", 80: "犯罪", 99: "纪录片", 10751: "家庭", 
+    16: "动画", 10759: "动作冒险", 35: "喜剧", 18: "剧情", 14: "奇幻", 878: "科幻", 9648: "悬疑",
+    10749: "爱情", 27: "恐怖", 10765: "科幻奇幻", 80: "犯罪", 99: "纪录片", 10751: "家庭",
     36: "历史", 10402: "音乐", 10770: "电视电影", 53: "惊悚", 10752: "战争", 37: "西部", 28: "动作", 12: "冒险",
     10762: "儿童", 10763: "新闻", 10764: "真人秀", 10766: "肥皂剧", 10767: "脱口秀", 10768: "战综"
 };
@@ -91,10 +75,9 @@ async function fetchTraktUserApi(endpoint, traktClientId, page) {
 }
 
 async function loadTraktUserList(params = {}) {
-    const username = params.username || "love00";
-    const listSlug = params.listSlug || "MARVEL Cinematic Universe";
+    const listSlug = params.listSlug || "imdb-top-rated-movies";
     const page = params.page || 1;
-    
+
     let traktClientId = params.traktClientId;
     const hex64Regex = /^[0-9a-fA-F]{64}$/;
     if (!traktClientId || !hex64Regex.test(String(traktClientId).trim())) {
@@ -102,23 +85,11 @@ async function loadTraktUserList(params = {}) {
     }
     try {
         Widget.storage.set("trakt_client_id", traktClientId);
-    } catch(err) {}
+    } catch (err) { }
 
     const errors = [];
-    // 格式化 slug 用作直接查询的备用
-    const formattedSlug = listSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-    // 1. 尝试直接获取该用户拥有的列表
-    try {
-        const rawData = await fetchTraktUserApi(`users/${username}/lists/${formattedSlug}/items`, traktClientId, page);
-        if (rawData && rawData.length > 0) {
-            return await parseTraktUserItems(rawData, traktClientId, page);
-        }
-    } catch (e) {
-        errors.push(`[直接获取] ${e.message || e}`);
-    }
-
-    // 2. 全局搜索该列表，找到对应的创建者及列表 ID
+    // 1. 全局搜索该列表，自动定位拥有者和 ID
     try {
         const searchResults = await fetchTraktUserApi(`search/list?query=${encodeURIComponent(listSlug)}`, traktClientId, 1);
         if (searchResults && searchResults.length > 0) {
@@ -157,22 +128,15 @@ async function loadTraktUserList(params = {}) {
 
 async function parseTraktUserItems(rawData, traktClientId, page) {
     if (!rawData || !Array.isArray(rawData) || rawData.length === 0) return [];
-    
+
     const promises = rawData.map(async (item, index) => {
         const mediaType = (item.type === "show" || item.show) ? "tv" : "movie";
         const subject = item.show || item.movie || item.season || item.episode || item;
-        
+
         if (!subject || !subject.ids || !subject.ids.tmdb) {
-            return {
-                id: String(subject.ids?.trakt || subject.ids?.slug || Math.random()),
-                type: "url",
-                title: subject.title || subject.name || "未知",
-                genreTitle: item.type || "Trakt",
-                subTitle: subject.year ? String(subject.year) : "",
-                description: `Trakt ID: ${subject.ids?.trakt || "未知"}`
-            };
+            return null;
         }
-        
+
         try {
             const d = await Widget.tmdb.get(`/${mediaType}/${subject.ids.tmdb}`, { params: { language: "zh-CN" } });
             const ratingText = item.rating ? `⭐ ${item.rating}分` : "";
@@ -192,18 +156,10 @@ async function parseTraktUserItems(rawData, traktClientId, page) {
                 backdropPath: d.backdrop_path || ""
             };
         } catch (e) {
-            return {
-                id: Number(subject.ids.tmdb),
-                tmdbId: Number(subject.ids.tmdb),
-                type: "tmdb",
-                mediaType: mediaType,
-                title: subject.title || "未知",
-                description: "加载详情失败",
-                subTitle: subject.year ? String(subject.year) : ""
-            };
+            return null;
         }
     });
-    
+
     return (await Promise.all(promises)).filter(Boolean);
 }
 
@@ -219,7 +175,7 @@ async function loadDetail(link) {
         let traktClientId = DEFAULT_TRAKT_ID;
         try {
             traktClientId = Widget.storage.get("trakt_client_id") || DEFAULT_TRAKT_ID;
-        } catch(err) {}
+        } catch (err) { }
         try {
             const rawData = await fetchTraktUserApi(`users/${username}/lists/${listId}/items`, traktClientId, 1);
             const items = await parseTraktUserItems(rawData, traktClientId, 1);
