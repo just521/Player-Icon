@@ -1,15 +1,15 @@
 /**
- * 玛卡巴卡 Trakt 用户数据 Forward Widget
- * 自动获取并展示 Trakt 公开列表的内容 (支持全局模糊搜索与所有者定位)
+ * 
+ * 自动获取并展示 Trakt 公开列表的内容
  */
 
 WidgetMetadata = {
   id: "trakt_user_widget",
   title: "Trakt用户数据",
   description: "展示 Trakt 点赞列表或任意公开列表的内容",
-  author: "𝙈𝙖𝙠𝙠𝙖𝙋𝙖𝙠𝙠𝙖",
-  site: "https://t.me/MakkaPakkaOvO",
-  version: "1.0.2",
+  author: "love11",
+  site: "https://app.trakt.tv/search?m=lists",
+  version: "1.0.0",
   requiredVersion: "0.0.1",
   
   globalParams: [
@@ -31,15 +31,15 @@ WidgetMetadata = {
       params: [
         {
           name: "username",
-          title: "用户账户 (如 love00)",
+          title: "",
           type: "input",
-          value: "love00"
+          value: ""
         },
         {
           name: "listSlug",
           title: "列表名称/英文标识",
           type: "input",
-          value: "MARVEL Cinematic Universe"
+          value: "imdb-top-rated-movies"
         },
         {
           name: "page",
