@@ -96,7 +96,8 @@ async function loadTraktUserList(params = {}) {
     const page = params.page || 1;
     
     let traktClientId = params.traktClientId;
-    if (!traktClientId || traktClientId === "null" || traktClientId === "undefined" || String(traktClientId).trim() === "") {
+    const hex64Regex = /^[0-9a-fA-F]{64}$/;
+    if (!traktClientId || !hex64Regex.test(String(traktClientId).trim())) {
         traktClientId = DEFAULT_TRAKT_ID;
     }
     try {
