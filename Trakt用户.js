@@ -1,15 +1,15 @@
 /**
  * 玛卡巴卡 Trakt 用户数据 Forward Widget
- * 聚合 Trakt 用户的想看、评分、列表与点赞
+ * 自动获取用户的指定列表内容
  */
 
 WidgetMetadata = {
   id: "trakt_user_widget",
   title: "Trakt用户数据",
-  description: "查看任一 Trakt 用户的想看/收藏夹、评分列表、公开列表与点赞",
+  description: "查看任一 Trakt 用户的特定公开列表内容",
   author: "𝙈𝙖𝙠𝙠𝙖𝙋𝙖𝙠𝙠𝙖",
   site: "https://t.me/MakkaPakkaOvO",
-  version: "1.0.0",
+  version: "1.0.1",
   requiredVersion: "0.0.1",
   
   globalParams: [
@@ -24,7 +24,7 @@ WidgetMetadata = {
   
   modules: [
     {
-      title: "Trakt 用户数据",
+      title: "Trakt 列表数据",
       functionName: "loadTraktUserList",
       type: "video",
       cacheDuration: 3600,
@@ -36,16 +36,10 @@ WidgetMetadata = {
           value: "love00"
         },
         {
-          name: "category",
-          title: "数据类型",
-          type: "enumeration",
-          value: "watchlist",
-          enumOptions: [
-            { title: "想看/收藏夹 (Watchlist)", value: "watchlist" },
-            { title: "评分列表 (Ratings)", value: "ratings" },
-            { title: "自定义列表 (Lists)", value: "lists" },
-            { title: "点赞的列表 (Likes)", value: "likes" }
-          ]
+          name: "listSlug",
+          title: "列表英文标识 (Slug)",
+          type: "input",
+          value: "marvel-cinematic-universe"
         },
         {
           name: "page",
@@ -64,7 +58,7 @@ const GLOBAL_GENRE_MAP_ALL = {
     16: "动画", 10759: "动作冒险", 35: "喜剧", 18: "剧情", 14: "奇幻", 878: "科幻", 9648: "悬疑", 
     10749: "爱情", 27: "恐怖", 10765: "科幻奇幻", 80: "犯罪", 99: "纪录片", 10751: "家庭", 
     36: "历史", 10402: "音乐", 10770: "电视电影", 53: "惊悚", 10752: "战争", 37: "西部", 28: "动作", 12: "冒险",
-    10762: "儿童", 10763: "新闻", 10764: "真人秀", 10766: "肥皂剧", 10767: "脱口秀", 10768: "战综"
+    10762: "儿童", 10763: "新闻", 10764: "真人秀", 10766: "肥皂剧", 10767: "脱口休", 10768: "战综"
 };
 
 function getGlobalGenreText(ids) {
@@ -98,7 +92,7 @@ async function fetchTraktUserApi(endpoint, traktClientId, page) {
 
 async function loadTraktUserList(params = {}) {
     const username = params.username || "love00";
-    const category = params.category || "watchlist";
+    const listSlug = params.listSlug || "marvel-cinematic-universe";
     const page = params.page || 1;
     
     let traktClientId = params.traktClientId;
@@ -110,62 +104,24 @@ async function loadTraktUserList(params = {}) {
     } catch(err) {}
 
     try {
-        if (category === "watchlist") {
-            const rawData = await fetchTraktUserApi(`users/${username}/watchlist`, traktClientId, page);
-            return await parseTraktUserItems(rawData, traktClientId, page);
-        } else if (category === "ratings") {
-            const rawData = await fetchTraktUserApi(`users/${username}/ratings`, traktClientId, page);
-            return await parseTraktUserItems(rawData, traktClientId, page);
-        } else if (category === "lists") {
-            const rawData = await fetchTraktUserApi(`users/${username}/lists`, traktClientId, page);
-            return (rawData || []).map(list => {
-                const link = `trakt-list:${list.user?.username || username}:${list.ids.trakt}`;
-                return {
-                    id: link,
-                    type: "url",
-                    title: `📂 ${list.name}`,
-                    genreTitle: "Trakt 列表",
-                    subTitle: `📄 ${list.item_count} 个项目 · 👍 ${list.likes} 点赞`,
-                    description: list.description || "暂无简介",
-                    link: link
-                };
-            });
-        } else if (category === "likes") {
-            let rawData = [];
-            try {
-                rawData = await fetchTraktUserApi(`users/${username}/likes/lists`, traktClientId, page);
-            } catch (err) {
-                try {
-                    rawData = await fetchTraktUserApi(`users/${username}/likes`, traktClientId, page);
-                } catch (innerErr) {
-                    return [{
-                        id: "api_limit",
-                        type: "text",
-                        title: "🔒 点赞列表获取受限",
-                        description: "由于 Trakt API 限制，无法获取非认证用户的公开点赞列表。请尝试查看其【想看/收藏夹 (Watchlist)】。"
-                    }];
-                }
-            }
-            if (!rawData || rawData.length === 0) return [];
-            return (rawData || []).map(item => {
-                const list = item.list;
-                if (!list) return null;
-                const link = `trakt-list:${list.user?.username || username}:${list.ids.trakt}`;
-                return {
-                    id: link,
-                    type: "url",
-                    title: `📂 ${list.name}`,
-                    genreTitle: "Trakt 点赞列表",
-                    subTitle: `📄 ${list.item_count} 个项目 · 👍 ${list.likes} 点赞`,
-                    description: list.description || "暂无简介",
-                    link: link
-                };
-            }).filter(Boolean);
+        const rawData = await fetchTraktUserApi(`users/${username}/lists/${listSlug}/items`, traktClientId, page);
+        if (!rawData || rawData.length === 0) {
+            return [{
+                id: "empty",
+                type: "text",
+                title: "📭 列表为空",
+                description: `用户 @${username} 的列表 "${listSlug}" 暂无内容或为私有。`
+            }];
         }
+        return await parseTraktUserItems(rawData, traktClientId, page);
     } catch (e) {
-        return [{ id: "empty", type: "text", title: "⚠️ 加载失败", description: e.message || "请检查网络或用户名" }];
+        return [{
+            id: "empty",
+            type: "text",
+            title: "⚠️ 加载失败",
+            description: `无法加载列表 "${listSlug}"。请检查用户名或列表标识是否正确，且该列表必须是公开的。`
+        }];
     }
-    return [];
 }
 
 async function parseTraktUserItems(rawData, traktClientId, page) {
