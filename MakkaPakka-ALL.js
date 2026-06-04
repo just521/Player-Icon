@@ -7,8 +7,8 @@
 const DEFAULT_TRAKT_ID = "95b59922670c84040db3632c7aac6f33704f6ffe5cbf3113a056e37cb45cb482";
 
 const GLOBAL_GENRE_MAP_ALL = {
-    16: "动画", 10759: "动作冒险", 35: "喜剧", 18: "剧情", 14: "奇幻", 878: "科幻", 9648: "悬疑", 
-    10749: "爱情", 27: "恐怖", 10765: "科幻奇幻", 80: "犯罪", 99: "纪录片", 10751: "家庭", 
+    16: "动画", 10759: "动作冒险", 35: "喜剧", 18: "剧情", 14: "奇幻", 878: "科幻", 9648: "悬疑",
+    10749: "爱情", 27: "恐怖", 10765: "科幻奇幻", 80: "犯罪", 99: "纪录片", 10751: "家庭",
     36: "历史", 10402: "音乐", 10770: "电视电影", 53: "惊悚", 10752: "战争", 37: "西部", 28: "动作", 12: "冒险",
     10762: "儿童", 10763: "新闻", 10764: "真人秀", 10766: "肥皂剧", 10767: "脱口秀", 10768: "战综"
 };
@@ -26,13 +26,13 @@ function getGlobalGenreText(ids) {
 // =========================================================================
 var WidgetMetadata = {
     id: "super_ultime_media_hub_makka",
-    title: "三分治之",
+    title: "Forward",
     description: "豆瓣热榜 平台剧场 Trakd热门列表",
-    author: "𝙈𝙖𝙠𝙠𝙖𝙋𝙖𝙠𝙠𝙖",
+    author: "",
     version: "1.4.1", // 
     requiredVersion: "0.0.1",
     site: "",
-    
+
     globalParams: [
         {
             name: "traktClientId",
@@ -188,96 +188,96 @@ var WidgetMetadata = {
 // =========================================================================
 
 const GithubDataUtils = {
-  emptyTips: [{ id: "empty", type: "text", title: "⚠️ 加载失败", description: "请检查网络连线" }],
+    emptyTips: [{ id: "empty", type: "text", title: "⚠️ 加载失败", description: "请检查网络连线" }],
 
-  async fetch(filename) {
-    const url = `https://raw.githubusercontent.com/MakkaPakka518/List/refs/heads/main/data/${filename}`;
-    try {
-      const resp = await Widget.http.get(url, { decodable: true });
-      if (!resp?.data) return this.emptyTips;
-      return typeof resp.data === "string" ? JSON.parse(resp.data) : resp.data;
-    } catch (e) {
-      console.error(`[Error] ${url}: ${e.message}`);
-      return this.emptyTips;
+    async fetch(filename) {
+        const url = `https://raw.githubusercontent.com/MakkaPakka518/List/refs/heads/main/data/${filename}`;
+        try {
+            const resp = await Widget.http.get(url, { decodable: true });
+            if (!resp?.data) return this.emptyTips;
+            return typeof resp.data === "string" ? JSON.parse(resp.data) : resp.data;
+        } catch (e) {
+            console.error(`[Error] ${url}: ${e.message}`);
+            return this.emptyTips;
+        }
+    },
+
+    sortList(list, sortType) {
+        if (!list || !Array.isArray(list) || list.length === 0) return list || [];
+        if (!sortType || sortType === "default") return list;
+
+        return [...list].sort((a, b) => {
+            switch (sortType) {
+                case "updated":
+                    const updateA = a.lastUpdateDate ? new Date(a.lastUpdateDate).getTime() : (a.releaseDate ? new Date(a.releaseDate).getTime() : 0);
+                    const updateB = b.lastUpdateDate ? new Date(b.lastUpdateDate).getTime() : (b.releaseDate ? new Date(b.releaseDate).getTime() : 0);
+                    return updateB - updateA;
+                case "recent":
+                    const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
+                    const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
+                    return dateB - dateA;
+                case "heat":
+                    const heatA = parseFloat(a.voteCount || a.vote_count) || 0;
+                    const heatB = parseFloat(b.voteCount || b.vote_count) || 0;
+                    return heatB - heatA;
+                case "trending":
+                    const trendA = parseFloat(a.popularity) || 0;
+                    const trendB = parseFloat(b.popularity) || 0;
+                    return trendB - trendA;
+                case "rating":
+                    const rateA = parseFloat(a.rating) || 0;
+                    const rateB = parseFloat(b.rating) || 0;
+                    return rateB - rateA;
+                default:
+                    return 0;
+            }
+        });
+    },
+
+    paginate(list, pageNum, pageSize = 24) {
+        if (!list || !Array.isArray(list)) return [];
+        const p = parseInt(pageNum) || 1;
+        const start = (p - 1) * pageSize;
+        return list.slice(start, start + pageSize);
     }
-  },
-
-  sortList(list, sortType) {
-    if (!list || !Array.isArray(list) || list.length === 0) return list || [];
-    if (!sortType || sortType === "default") return list;
-
-    return [...list].sort((a, b) => {
-      switch (sortType) {
-        case "updated":
-          const updateA = a.lastUpdateDate ? new Date(a.lastUpdateDate).getTime() : (a.releaseDate ? new Date(a.releaseDate).getTime() : 0);
-          const updateB = b.lastUpdateDate ? new Date(b.lastUpdateDate).getTime() : (b.releaseDate ? new Date(b.releaseDate).getTime() : 0);
-          return updateB - updateA;
-        case "recent":
-          const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
-          const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
-          return dateB - dateA;
-        case "heat":
-          const heatA = parseFloat(a.voteCount || a.vote_count) || 0;
-          const heatB = parseFloat(b.voteCount || b.vote_count) || 0;
-          return heatB - heatA;
-        case "trending":
-          const trendA = parseFloat(a.popularity) || 0;
-          const trendB = parseFloat(b.popularity) || 0;
-          return trendB - trendA;
-        case "rating":
-          const rateA = parseFloat(a.rating) || 0;
-          const rateB = parseFloat(b.rating) || 0;
-          return rateB - rateA;
-        default:
-          return 0;
-      }
-    });
-  },
-
-  paginate(list, pageNum, pageSize = 24) {
-    if (!list || !Array.isArray(list)) return [];
-    const p = parseInt(pageNum) || 1;
-    const start = (p - 1) * pageSize;
-    return list.slice(start, start + pageSize);
-  }
 };
 
 /**
  * 模块：加载豆瓣榜单
  */
 async function loadDouban(params = {}) {
-  const data = await GithubDataUtils.fetch("douban-hot.json");
-  if (data === GithubDataUtils.emptyTips) return data;
-  
-  let list = data?.[params.channel] || [];
-  list = GithubDataUtils.sortList(list, params.sort_type);
-  return GithubDataUtils.paginate(list, params.page);
+    const data = await GithubDataUtils.fetch("douban-hot.json");
+    if (data === GithubDataUtils.emptyTips) return data;
+
+    let list = data?.[params.channel] || [];
+    list = GithubDataUtils.sortList(list, params.sort_type);
+    return GithubDataUtils.paginate(list, params.page);
 }
 
 /**
  * 模块：加载精选剧场
  */
 async function loadTheater(params = {}) {
-  const data = await GithubDataUtils.fetch("theater-data.json");
-  if (data === GithubDataUtils.emptyTips) return data;
-  
-  const brand = params.brand || "迷雾剧场";
-  const status = params.status || "all";
-  
-  const brandData = data[brand];
-  if (!brandData) return [];
-  
-  let list = [];
-  if (status === "aired") {
-    list = brandData.aired || [];
-  } else if (status === "upcoming") {
-    list = brandData.upcoming || [];
-  } else {
-    list = [...(brandData.upcoming || []), ...(brandData.aired || [])];
-  }
-  
-  list = GithubDataUtils.sortList(list, params.sort_type);
-  return GithubDataUtils.paginate(list, params.page);
+    const data = await GithubDataUtils.fetch("theater-data.json");
+    if (data === GithubDataUtils.emptyTips) return data;
+
+    const brand = params.brand || "迷雾剧场";
+    const status = params.status || "all";
+
+    const brandData = data[brand];
+    if (!brandData) return [];
+
+    let list = [];
+    if (status === "aired") {
+        list = brandData.aired || [];
+    } else if (status === "upcoming") {
+        list = brandData.upcoming || [];
+    } else {
+        list = [...(brandData.upcoming || []), ...(brandData.aired || [])];
+    }
+
+    list = GithubDataUtils.sortList(list, params.sort_type);
+    return GithubDataUtils.paginate(list, params.page);
 }
 
 /**
