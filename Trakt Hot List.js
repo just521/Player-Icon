@@ -5,7 +5,7 @@
 
 WidgetMetadata = {
     id: "trakt_user_widget",
-    title: "Trakt用户数据",
+    title: "Trakt 热门列表",
     description: "展示 Trakt 点赞列表或任意公开列表的内容",
     author: "love00",
     site: "https://app.trakt.tv/search?m=lists",
@@ -21,7 +21,7 @@ WidgetMetadata = {
             params: [
                 {
                     name: "listSlug",
-                    title: "列表名称/标识",
+                    title: "默认IMDb Top/可自行填写其他",
                     type: "input",
                     value: "imdb-top-rated-movies"
                 },
