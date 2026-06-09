@@ -1,6 +1,6 @@
 WidgetMetadata = {
   id: "forward.stream_provider",
-  title: "流媒体与剧场✅",
+  title: "流媒体与剧场",
   version: "1.0.2",
   requiredVersion: "0.0.1",
   description: "基于TMDB发现全球主流流媒体平台及国内热门剧场品牌的电视剧",
