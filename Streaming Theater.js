@@ -1,14 +1,14 @@
 WidgetMetadata = {
   id: "forward.stream_provider",
-  title: "流媒体与剧场",
-  version: "1.0.1",
+  title: "流媒体与剧场✅",
+  version: "1.0.2",
   requiredVersion: "0.0.1",
   description: "基于TMDB发现全球主流流媒体平台及国内热门剧场品牌的电视剧",
   author: "Antigravity",
   site: "https://github.com/InchStudio/ForwardWidgets",
   modules: [
     {
-      id: "discover",
+      id: "stream_provider_discover",
       title: "流媒体平台与剧场",
       functionName: "loadList",
       cacheDuration: 3600,
@@ -16,7 +16,7 @@ WidgetMetadata = {
         {
           name: "provider",
           title: "平台 / 剧场",
-          type: "input",
+          type: "enumeration",
           value: "netflix",
           enumOptions: [
             { title: "Netflix", value: "netflix" },
