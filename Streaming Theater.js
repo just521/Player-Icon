@@ -28,10 +28,10 @@ WidgetMetadata = {
             { title: "优酷", value: "youku" },
             { title: "芒果TV", value: "mgtv" },
             { title: "哔哩哔哩", value: "bilibili" },
-            { title: "迷雾剧场", value: "light-on" },
-            { title: "白夜剧场", value: "white-night" },
-            { title: "X剧场", value: "x-theater" },
-            { title: "正午阳光", value: "daylight-entertainment" }
+            { title: "迷雾剧场", value: "https://raw.githubusercontent.com/MakkaPakka518/List/refs/heads/main/data/theater-data.json#迷雾剧场" },
+            { title: "白夜剧场", value: "https://raw.githubusercontent.com/MakkaPakka518/List/refs/heads/main/data/theater-data.json#白夜剧场" },
+            { title: "X剧场", value: "https://raw.githubusercontent.com/MakkaPakka518/List/refs/heads/main/data/theater-data.json#X剧场" },
+            { title: "正午阳光", value: "https://raw.githubusercontent.com/MakkaPakka518/List/refs/heads/main/data/theater-data.json#正午阳光" }
           ]
         },
         {
@@ -71,69 +71,50 @@ async function loadList(params = {}) {
     const sortBy = params.sort_by || "first_air_date.desc";
     const language = params.language || "zh-CN";
 
-    const THEATER_SHOWS = {
-      "light-on": [
-        "隐秘的角落", "沉默的真相", "无证之罪", "尘封十三载", "平原上的摩西",
-        "十日游戏", "非常目击", "在劫难逃", "谁是凶手", "淘金",
-        "回来的女儿", "八角亭谜雾", "暗夜行者", "致命愿望", "回响",
-        "仿生人间", "错位", "看不见影子的少年"
-      ],
-      "white-night": [
-        "微暗之火", "新生", "边水往事", "雪迷宫", "黑白诀", "白夜破晓",
-        "沙尘暴", "以法之名", "破茧2", "旷野之境"
-      ],
-      "x-theater": [
-        "漫长的季节", "繁城之下", "欢颜", "黑土无言", "棋士"
-      ],
-      "daylight-entertainment": [
-        "琅琊榜", "知否知否应是绿肥红瘦", "伪装者", "开端", "大江大河",
-        "都挺好", "欢乐颂", "山海情", "乔家的儿女", "清平乐",
-        "战长沙", "县委大院", "我是余欢水", "凡人歌", "外科风云"
-      ]
-    };
-
-    if (THEATER_SHOWS[provider]) {
-      const showNames = THEATER_SHOWS[provider];
-      const promises = showNames.map(async (query) => {
-        try {
-          const res = await Widget.tmdb.get("search/tv", {
-            params: { query, language }
-          });
-          if (!res || !res.results || res.results.length === 0) return null;
-          const match = res.results[0];
-          return {
-            id: match.id,
-            type: "tmdb",
-            mediaType: "tv",
-            title: match.name || match.original_name,
-            posterPath: match.poster_path,
-            backdropPath: match.backdrop_path,
-            rating: match.vote_average,
-            releaseDate: match.first_air_date,
-            description: match.overview,
-            popularity: match.popularity,
-          };
-        } catch (err) {
-          console.error(`搜索剧集 "${query}" 失败:`, err.message || err);
-          return null;
-        }
-      });
-
-      let results = (await Promise.all(promises)).filter(Boolean);
-
-      if (sortBy === "first_air_date.desc") {
-        results.sort((a, b) => new Date(b.releaseDate || 0) - new Date(a.releaseDate || 0));
-      } else if (sortBy === "first_air_date.asc") {
-        results.sort((a, b) => new Date(a.releaseDate || 0) - new Date(b.releaseDate || 0));
-      } else if (sortBy === "popularity.desc") {
-        results.sort((a, b) => b.popularity - a.popularity);
-      } else if (sortBy === "vote_average.desc") {
-        results.sort((a, b) => b.rating - a.rating);
+    if (provider.startsWith("http://") || provider.startsWith("https://")) {
+      let url = provider;
+      let key = "迷雾剧场";
+      if (url.includes("#")) {
+        const parts = url.split("#");
+        url = parts[0];
+        key = decodeURIComponent(parts[1]);
       }
 
-      const pageSize = 20;
-      const start = (page - 1) * pageSize;
-      return results.slice(start, start + pageSize);
+      try {
+        const response = await Widget.http.get(url, { decodable: true });
+        const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+        if (data && data[key]) {
+          let results = (data[key].aired || []).map((m) => ({
+            id: Number(m.id),
+            type: "tmdb",
+            mediaType: "tv",
+            title: m.title,
+            posterPath: m.posterPath,
+            backdropPath: m.backdropPath,
+            rating: m.rating,
+            releaseDate: m.releaseDate,
+            description: m.description,
+            popularity: m.popularity,
+          }));
+
+          if (sortBy === "first_air_date.desc") {
+            results.sort((a, b) => new Date(b.releaseDate || 0) - new Date(a.releaseDate || 0));
+          } else if (sortBy === "first_air_date.asc") {
+            results.sort((a, b) => new Date(a.releaseDate || 0) - new Date(b.releaseDate || 0));
+          } else if (sortBy === "popularity.desc") {
+            results.sort((a, b) => b.popularity - a.popularity);
+          } else if (sortBy === "vote_average.desc") {
+            results.sort((a, b) => b.rating - a.rating);
+          }
+
+          const pageSize = 20;
+          const start = (page - 1) * pageSize;
+          return results.slice(start, start + pageSize);
+        }
+      } catch (err) {
+        console.error("加载网络剧场数据失败:", err.message || err);
+      }
+      return [];
     }
 
     const discoverParams = {
