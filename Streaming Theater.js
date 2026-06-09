@@ -9,7 +9,7 @@ WidgetMetadata = {
   modules: [
     {
       id: "discover",
-      title: "发现剧集",
+      title: "流媒体平台与剧场",
       functionName: "loadList",
       cacheDuration: 3600,
       params: [
