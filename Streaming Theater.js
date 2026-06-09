@@ -1,7 +1,7 @@
 WidgetMetadata = {
   id: "forward.stream_provider",
   title: "流媒体与剧场",
-  version: "1.0.0",
+  version: "1.0.1",
   requiredVersion: "0.0.1",
   description: "基于TMDB发现全球主流流媒体平台及国内热门剧场品牌的电视剧",
   author: "Antigravity",
@@ -38,12 +38,12 @@ WidgetMetadata = {
           name: "sort_by",
           title: "排序方式",
           type: "input",
-          value: "first_air_date.desc",
+          value: "📅 首播时间降序",
           placeholders: [
-            { title: "📅 首播时间降序", value: "first_air_date.desc" },
-            { title: "📅 首播时间升序", value: "first_air_date.asc" },
-            { title: "🔥 流行热度降序", value: "popularity.desc" },
-            { title: "⭐ 用户评分降序", value: "vote_average.desc" }
+            { title: "📅 首播时间降序", value: "📅 首播时间降序" },
+            { title: "📅 首播时间升序", value: "📅 首播时间升序" },
+            { title: "🔥 流行热度降序", value: "🔥 流行热度降序" },
+            { title: "⭐ 用户评分降序", value: "⭐ 用户评分降序" }
           ]
         },
         {
@@ -68,7 +68,16 @@ async function loadList(params = {}) {
   try {
     const page = Number(params.page || 1);
     const provider = params.provider || "netflix";
-    const sortBy = params.sort_by || "first_air_date.desc";
+    let sortBy = params.sort_by || "📅 首播时间降序";
+    if (sortBy === "📅 首播时间降序" || sortBy === "first_air_date.desc") {
+      sortBy = "first_air_date.desc";
+    } else if (sortBy === "📅 首播时间升序" || sortBy === "first_air_date.asc") {
+      sortBy = "first_air_date.asc";
+    } else if (sortBy === "🔥 流行热度降序" || sortBy === "popularity.desc") {
+      sortBy = "popularity.desc";
+    } else if (sortBy === "⭐ 用户评分降序" || sortBy === "vote_average.desc") {
+      sortBy = "vote_average.desc";
+    }
     const language = params.language || "zh-CN";
 
     if (provider.startsWith("http://") || provider.startsWith("https://")) {
