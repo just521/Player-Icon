@@ -71,39 +71,69 @@ async function loadList(params = {}) {
     const sortBy = params.sort_by || "first_air_date.desc";
     const language = params.language || "zh-CN";
 
-    if (provider === "light-on" || provider === "white-night" || provider === "x-theater") {
-      let query = "";
-      if (provider === "light-on") query = "迷雾剧场";
-      else if (provider === "white-night") query = "白夜剧场";
-      else if (provider === "x-theater") query = "X剧场";
+    const THEATER_SHOWS = {
+      "light-on": [
+        "隐秘的角落", "沉默的真相", "无证之罪", "尘封十三载", "平原上的摩西",
+        "十日游戏", "非常目击", "在劫难逃", "谁是凶手", "淘金",
+        "回来的女儿", "八角亭谜雾", "暗夜行者", "致命愿望", "回响",
+        "仿生人间", "错位", "看不见影子的少年"
+      ],
+      "white-night": [
+        "微暗之火", "新生", "边水往事", "雪迷宫", "黑白诀", "白夜破晓",
+        "沙尘暴", "以法之名", "破茧2", "旷野之境"
+      ],
+      "x-theater": [
+        "漫长的季节", "繁城之下", "欢颜", "黑土无言", "棋士"
+      ],
+      "daylight-entertainment": [
+        "琅琊榜", "知否知否应是绿肥红瘦", "伪装者", "开端", "大江大河",
+        "都挺好", "欢乐颂", "山海情", "乔家的儿女", "清平乐",
+        "战长沙", "县委大院", "我是余欢水", "凡人歌", "外科风云"
+      ]
+    };
 
-      const res = await Widget.tmdb.get("search/tv", {
-        params: { query, page, language }
+    if (THEATER_SHOWS[provider]) {
+      const showNames = THEATER_SHOWS[provider];
+      const promises = showNames.map(async (query) => {
+        try {
+          const res = await Widget.tmdb.get("search/tv", {
+            params: { query, language }
+          });
+          if (!res || !res.results || res.results.length === 0) return null;
+          const match = res.results[0];
+          return {
+            id: match.id,
+            type: "tmdb",
+            mediaType: "tv",
+            title: match.name || match.original_name,
+            posterPath: match.poster_path,
+            backdropPath: match.backdrop_path,
+            rating: match.vote_average,
+            releaseDate: match.first_air_date,
+            description: match.overview,
+            popularity: match.popularity,
+          };
+        } catch (err) {
+          console.error(`搜索剧集 "${query}" 失败:`, err.message || err);
+          return null;
+        }
       });
-      if (!res || !res.results) return [];
 
-      let results = res.results;
+      let results = (await Promise.all(promises)).filter(Boolean);
+
       if (sortBy === "first_air_date.desc") {
-        results.sort((a, b) => new Date(b.first_air_date || 0) - new Date(a.first_air_date || 0));
+        results.sort((a, b) => new Date(b.releaseDate || 0) - new Date(a.releaseDate || 0));
       } else if (sortBy === "first_air_date.asc") {
-        results.sort((a, b) => new Date(a.first_air_date || 0) - new Date(b.first_air_date || 0));
+        results.sort((a, b) => new Date(a.releaseDate || 0) - new Date(b.releaseDate || 0));
       } else if (sortBy === "popularity.desc") {
         results.sort((a, b) => b.popularity - a.popularity);
       } else if (sortBy === "vote_average.desc") {
-        results.sort((a, b) => b.vote_average - a.vote_average);
+        results.sort((a, b) => b.rating - a.rating);
       }
 
-      return results.map((m) => ({
-        id: m.id,
-        type: "tmdb",
-        mediaType: "tv",
-        title: m.name || m.original_name,
-        posterPath: m.poster_path,
-        backdropPath: m.backdrop_path,
-        rating: m.vote_average,
-        releaseDate: m.first_air_date,
-        description: m.overview,
-      }));
+      const pageSize = 20;
+      const start = (page - 1) * pageSize;
+      return results.slice(start, start + pageSize);
     }
 
     const discoverParams = {
@@ -130,8 +160,6 @@ async function loadList(params = {}) {
       discoverParams.with_networks = 1631;
     } else if (provider === "bilibili") {
       discoverParams.with_networks = 1605;
-    } else if (provider === "daylight-entertainment") {
-      discoverParams.with_companies = 148869;
     }
 
     const res = await Widget.tmdb.get("discover/tv", { params: discoverParams });
