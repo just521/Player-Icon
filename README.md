@@ -12,5 +12,5 @@ Letterboxd🔗：https://raw.githubusercontent.com/just521/Player-Icon/refs/head
 
 RottenTomatoes🔗：https://raw.githubusercontent.com/just521/Player-Icon/refs/heads/master/RottenTomatoes.js
 
-
+db mt🔗：https://raw.githubusercontent.com/just521/Player-Icon/refs/heads/master/db%20mt.js
 
