@@ -9,7 +9,7 @@ WidgetMetadata = {
   description: "豆瓣地区热门剧集与番剧",
   author: "Forward",
   site: "",
-  version: "1.1.1",
+  version: "1.1.2",
   requiredVersion: "0.0.1",
 
   modules: [
@@ -61,52 +61,6 @@ WidgetMetadata = {
     },
     {
       title: "热门番剧",
-      description: "Bangumi 实时热榜",
-      functionName: "loadBangumi",
-      type: "video",
-      cacheDuration: 43200,
-      params: [
-        {
-          name: "genre",
-          title: "番剧类型",
-          type: "enumeration",
-          value: "",
-          enumOptions: [
-            { title: "全部", value: "" },
-            { title: "动作", value: "28" },
-            { title: "冒险", value: "12" },
-            { title: "动画", value: "16" },
-            { title: "喜剧", value: "35" },
-            { title: "奇幻", value: "14" },
-            { title: "剧情", value: "18" },
-            { title: "科幻", value: "878" },
-            { title: "悬疑", value: "9648" }
-          ]
-        },
-        {
-          name: "sort_type",
-          title: "排序方式",
-          type: "enumeration",
-          value: "default",
-          enumOptions: [
-            { title: "默认原序", value: "default" },
-            { title: "最近更新", value: "updated" },
-            { title: "最近发布", value: "recent" },
-            { title: "热度最高", value: "heat" },
-            { title: "流行趋势", value: "trending" },
-            { title: "高分优先", value: "rating" }
-          ]
-        },
-        {
-          name: "page",
-          title: "页码",
-          type: "page",
-          startPage: 1
-        }
-      ]
-    },
-    {
-      title: "豆瓣热门番剧",
       description: "豆瓣实时热门动漫番剧",
       functionName: "loadDoubanAnime",
       type: "video",
@@ -217,7 +171,7 @@ const Utils = {
 };
 
 /**
- * 模块 1：加载豆瓣榜单
+ * 模块 1：加载豆瓣热门榜单
  */
 async function loadDouban(params = {}) {
   const data = await Utils.fetch("douban-hot.json");
@@ -239,24 +193,6 @@ async function loadDoubanAnime(params = {}) {
 
   if (params.genre && params.genre !== "") {
     list = list.filter(item => item.genreTitle && item.genreTitle.includes(params.genre));
-  }
-
-  list = Utils.sortList(list, params.sort_type); // 同步调用
-  return Utils.paginate(list, params.page);
-}
-
-/**
- * 模块 3：加载热门番剧 (Bangumi)
- */
-async function loadBangumi(params = {}) {
-  const data = await Utils.fetch("bangumi-hot.json");
-  if (data === Utils.emptyTips) return data;
-
-  let list = data?.hot_anime || data?.items || [];
-
-  if (params.genre && params.genre !== "") {
-    const genreId = parseInt(params.genre);
-    list = list.filter(item => item.rawGenres && item.rawGenres.includes(genreId));
   }
 
   list = Utils.sortList(list, params.sort_type); // 同步调用
