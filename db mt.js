@@ -1,7 +1,7 @@
 WidgetMetadata = {
   id: "forward.db_mt",
-  title: "豆瓣最近热门剧集",
-  description: "豆瓣最近热门剧集与综艺探索",
+  title: "豆瓣最近热门-TV",
+  description: "国产剧、欧美剧、日剧、韩剧、动画、纪录片",
   author: "Forward",
   version: "1.4.0",
   requiredVersion: "0.0.1",
