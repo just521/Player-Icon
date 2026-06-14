@@ -9,7 +9,7 @@ WidgetMetadata = {
   description: "豆瓣地区热门剧集与番剧",
   author: "Forward",
   site: "",
-  version: "1.1.0",
+  version: "1.1.1",
   requiredVersion: "0.0.1",
 
   modules: [
@@ -81,6 +81,52 @@ WidgetMetadata = {
             { title: "剧情", value: "18" },
             { title: "科幻", value: "878" },
             { title: "悬疑", value: "9648" }
+          ]
+        },
+        {
+          name: "sort_type",
+          title: "排序方式",
+          type: "enumeration",
+          value: "default",
+          enumOptions: [
+            { title: "默认原序", value: "default" },
+            { title: "最近更新", value: "updated" },
+            { title: "最近发布", value: "recent" },
+            { title: "热度最高", value: "heat" },
+            { title: "流行趋势", value: "trending" },
+            { title: "高分优先", value: "rating" }
+          ]
+        },
+        {
+          name: "page",
+          title: "页码",
+          type: "page",
+          startPage: 1
+        }
+      ]
+    },
+    {
+      title: "豆瓣热门番剧",
+      description: "豆瓣实时热门动漫番剧",
+      functionName: "loadDoubanAnime",
+      type: "video",
+      cacheDuration: 43200,
+      params: [
+        {
+          name: "genre",
+          title: "番剧类型",
+          type: "enumeration",
+          value: "",
+          enumOptions: [
+            { title: "全部", value: "" },
+            { title: "动作", value: "动作" },
+            { title: "冒险", value: "冒险" },
+            { title: "动画", value: "动画" },
+            { title: "喜剧", value: "喜剧" },
+            { title: "奇幻", value: "奇幻" },
+            { title: "剧情", value: "剧情" },
+            { title: "科幻", value: "科幻" },
+            { title: "悬疑", value: "悬疑" }
           ]
         },
         {
@@ -179,6 +225,23 @@ async function loadDouban(params = {}) {
 
   let list = data?.[params.channel] || [];
   list = Utils.sortList(list, params.sort_type); // 直接同步调用，不再 await
+  return Utils.paginate(list, params.page);
+}
+
+/**
+ * 模块 2：加载豆瓣热门番剧
+ */
+async function loadDoubanAnime(params = {}) {
+  const data = await Utils.fetch("douban-hot.json");
+  if (data === Utils.emptyTips) return data;
+
+  let list = data?.tv_animation || [];
+
+  if (params.genre && params.genre !== "") {
+    list = list.filter(item => item.genreTitle && item.genreTitle.includes(params.genre));
+  }
+
+  list = Utils.sortList(list, params.sort_type); // 同步调用
   return Utils.paginate(list, params.page);
 }
 
