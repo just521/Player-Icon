@@ -1,9 +1,9 @@
 WidgetMetadata = {
   id: "forward.db_mt",
-  title: "豆瓣最近热门-TV",
-  description: "国产剧、欧美剧、日剧、韩剧、动画、纪录片",
+  title: "豆瓣最近热门剧集",
+  description: "豆瓣最近热门剧集与综艺探索",
   author: "Forward",
-  version: "1.4.0",
+  version: "1.4.1",
   requiredVersion: "0.0.1",
   site: "https://github.com/InchStudio/ForwardWidgets",
 
@@ -157,7 +157,6 @@ async function loadDoubanExplore(params = {}) {
           mediaType: tmdb.media_type || "tv",
           title: item.title,
           posterPath: tmdb.poster_path,
-          backdropPath: tmdb.backdrop_path,
           rating: rating,
           description: item.card_subtitle || tmdb.overview || "暂无简介"
         };
