@@ -1,16 +1,16 @@
 WidgetMetadata = {
   id: "forward.db_mt",
-  title: "豆瓣最近热门剧集",
-  description: "豆瓣最近热门剧集与综艺探索",
+  title: "豆瓣最近热门-TV",
+  description: "国产剧、欧美剧、日剧、韩剧、动画、纪录片",
   author: "Forward",
-  version: "1.4.1",
+  version: "1.4.2",
   requiredVersion: "0.0.1",
   site: "https://github.com/InchStudio/ForwardWidgets",
 
   modules: [
     {
-      title: "最近热门剧集",
-      description: "豆瓣最近热门剧集、综艺、动画与纪录片",
+      title: "最近热门",
+      description: "豆瓣最近热门剧集 动画 纪录片",
       functionName: "loadDoubanExplore",
       type: "video",
       cacheDuration: 3600,
@@ -147,7 +147,7 @@ async function loadDoubanExplore(params = {}) {
     // 并行对每个豆瓣条目进行 TMDB 匹配
     const promises = list.map(async item => {
       const tmdb = await searchTmdb(item.title, "tv", debugLog);
-      
+
       // 如果在列表中能成功匹配 TMDB，直接以 type: "tmdb" 返回，确保完美呈现与播放
       if (tmdb) {
         const rating = tmdb.vote_average || (item.rating ? item.rating.value : 0);
@@ -157,6 +157,8 @@ async function loadDoubanExplore(params = {}) {
           mediaType: tmdb.media_type || "tv",
           title: item.title,
           posterPath: tmdb.poster_path,
+          backdropPath: tmdb.backdrop_path,
+          releaseDate: tmdb.first_air_date || tmdb.release_date || "",
           rating: rating,
           description: item.card_subtitle || tmdb.overview || "暂无简介"
         };
@@ -164,11 +166,14 @@ async function loadDoubanExplore(params = {}) {
 
       // 如果在列表中没能匹配到 TMDB，我们不要将其过滤，而是作为 type: "url" 返回！
       // 这样用户在列表页中可以正常看到该剧集（显示豆瓣标题、评分、豆瓣封面），点击进入详情页时再做深度搜索匹配
+      const yearMatch = (item.card_subtitle || "").match(/(\d{4})/);
+      const releaseDate = yearMatch ? yearMatch[1] : "";
       return {
         id: `db_${item.id}`,
         type: "url",
         title: item.title,
         posterPath: item.pic ? item.pic.large : "",
+        releaseDate: releaseDate,
         rating: item.rating ? item.rating.value : 0,
         description: item.card_subtitle || "暂无简介",
         link: `douban:${item.type || "tv"}:${item.id}:${item.title}`
@@ -176,12 +181,12 @@ async function loadDoubanExplore(params = {}) {
     });
 
     const results = (await Promise.all(promises)).filter(Boolean);
-    
+
     // 如果列表全空，展示错误和调试日志
     if (results.length === 0) {
       return page === 1 ? [{ id: "empty", type: "text", title: "⚠️ 未在TMDB找到匹配的剧集", description: debugLog.join("\n") }] : [];
     }
-    
+
     return results;
   } catch (error) {
     console.error("[loadDoubanExplore] 失败:", error.message || error);
@@ -230,7 +235,7 @@ async function loadDetail(link) {
       }
     });
     doubanData = typeof res.data === "string" ? JSON.parse(res.data) : (res.data || {});
-  } catch (e) {}
+  } catch (e) { }
 
   const finalTitle = title;
   const finalDesc = doubanData?.intro || doubanData?.card_subtitle || "暂无简介";
@@ -245,10 +250,14 @@ async function loadDetail(link) {
       title: finalTitle,
       posterPath: tmdbMatch.poster_path || finalPoster,
       backdropPath: tmdbMatch.backdrop_path,
+      releaseDate: tmdbMatch.first_air_date || tmdbMatch.release_date || "",
       rating: tmdbMatch.vote_average || doubanData?.rating?.value || 0,
       description: finalDesc
     };
   }
+
+  const yearMatch = (doubanData?.card_subtitle || doubanData?.year || "").toString().match(/(\d{4})/);
+  const releaseDate = yearMatch ? yearMatch[1] : "";
 
   // 依然没有匹配到，返回纯展示的 url 类型，避免报错
   return {
@@ -256,6 +265,7 @@ async function loadDetail(link) {
     type: "url",
     title: finalTitle,
     posterPath: finalPoster,
+    releaseDate: releaseDate,
     description: finalDesc,
     link: link
   };
