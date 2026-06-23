@@ -3,7 +3,7 @@ WidgetMetadata = {
   title: "豆瓣最近热门-TV",
   description: "国产剧、欧美剧、日剧、韩剧、动画、纪录片",
   author: "Forward",
-  version: "1.4.2",
+  version: "1.4.0",
   requiredVersion: "0.0.1",
   site: "https://github.com/InchStudio/ForwardWidgets",
 
