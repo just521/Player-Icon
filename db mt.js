@@ -3,13 +3,13 @@ WidgetMetadata = {
   title: "豆瓣最近热门-TV",
   description: "国产剧、欧美剧、日剧、韩剧、动画、纪录片",
   author: "Forward",
-  version: "1.4.0",
+  version: "1.4.1",
   requiredVersion: "0.0.1",
   site: "https://github.com/InchStudio/ForwardWidgets",
 
   modules: [
     {
-      title: "最近热门",
+      title: "",
       description: "豆瓣最近热门剧集 动画 纪录片",
       functionName: "loadDoubanExplore",
       type: "video",
@@ -46,6 +46,11 @@ WidgetMetadata = {
 // ============================================
 
 async function searchTmdb(title, mediaType, debugLog = []) {
+  if (typeof title !== "string") {
+    debugLog.push(`[TMDB Search] 错误: title 为空或不是字符串: ${title}`);
+    return null;
+  }
+
   // 清洗标题，去除季数、年番、完结篇等影响搜索的后缀
   let cleanTitle = title
     .replace(/第[一二三四五六七八九十\d]+[季期章回]/g, "")
@@ -141,7 +146,7 @@ async function loadDoubanExplore(params = {}) {
     });
 
     const data = typeof res.data === "string" ? JSON.parse(res.data) : (res.data || {});
-    const list = data.items || [];
+    const list = (data.items || []).filter(item => item && item.id && item.title);
     if (list.length === 0) return page === 1 ? [{ id: "empty", type: "text", title: "⚠️ 暂无数据" }] : [];
 
     // 并行对每个豆瓣条目进行 TMDB 匹配
@@ -151,14 +156,17 @@ async function loadDoubanExplore(params = {}) {
       // 如果在列表中能成功匹配 TMDB，直接以 type: "tmdb" 返回，确保完美呈现与播放
       if (tmdb) {
         const rating = tmdb.vote_average || (item.rating ? item.rating.value : 0);
+        const date = tmdb.first_air_date || tmdb.release_date || "";
+        const year = date ? date.substring(0, 4) : "";
+        const displayTitle = year ? `${item.title} (${year})` : item.title;
         return {
           id: tmdb.id,
           type: "tmdb",
           mediaType: tmdb.media_type || "tv",
-          title: item.title,
+          title: displayTitle,
           posterPath: tmdb.poster_path,
           backdropPath: tmdb.backdrop_path,
-          releaseDate: tmdb.first_air_date || tmdb.release_date || "",
+          releaseDate: date,
           rating: rating,
           description: item.card_subtitle || tmdb.overview || "暂无简介"
         };
@@ -168,10 +176,11 @@ async function loadDoubanExplore(params = {}) {
       // 这样用户在列表页中可以正常看到该剧集（显示豆瓣标题、评分、豆瓣封面），点击进入详情页时再做深度搜索匹配
       const yearMatch = (item.card_subtitle || "").match(/(\d{4})/);
       const releaseDate = yearMatch ? yearMatch[1] : "";
+      const displayTitle = releaseDate ? `${item.title} (${releaseDate})` : item.title;
       return {
         id: `db_${item.id}`,
         type: "url",
-        title: item.title,
+        title: displayTitle,
         posterPath: item.pic ? item.pic.large : "",
         releaseDate: releaseDate,
         rating: item.rating ? item.rating.value : 0,
