@@ -3,7 +3,7 @@ WidgetMetadata = {
   title: "豆瓣最近热门-TV",
   description: "国产剧、欧美剧、日剧、韩剧、动画、纪录片",
   author: "Forward",
-  version: "1.4.2",
+  version: "1.4.3",
   requiredVersion: "0.0.1",
   site: "https://github.com/InchStudio/ForwardWidgets",
 
@@ -157,13 +157,11 @@ async function loadDoubanExplore(params = {}) {
       if (tmdb) {
         const rating = tmdb.vote_average || (item.rating ? item.rating.value : 0);
         const date = tmdb.first_air_date || tmdb.release_date || "";
-        const year = date ? date.substring(0, 4) : "";
-        const displayTitle = year ? `${item.title} (${year})` : item.title;
         return {
           id: tmdb.id,
           type: "tmdb",
           mediaType: tmdb.media_type || "tv",
-          title: displayTitle,
+          title: item.title,
           posterPath: tmdb.poster_path,
           backdropPath: tmdb.backdrop_path,
           releaseDate: date,
@@ -176,11 +174,10 @@ async function loadDoubanExplore(params = {}) {
       // 这样用户在列表页中可以正常看到该剧集（显示豆瓣标题、评分、豆瓣封面），点击进入详情页时再做深度搜索匹配
       const yearMatch = (item.card_subtitle || "").match(/(\d{4})/);
       const releaseDate = yearMatch ? yearMatch[1] : "";
-      const displayTitle = releaseDate ? `${item.title} (${releaseDate})` : item.title;
       return {
         id: `db_${item.id}`,
         type: "url",
-        title: displayTitle,
+        title: item.title,
         posterPath: item.pic ? item.pic.large : "",
         releaseDate: releaseDate,
         rating: item.rating ? item.rating.value : 0,
