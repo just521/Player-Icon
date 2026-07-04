@@ -3,7 +3,7 @@ WidgetMetadata = {
   title: "豆瓣最近热门-TV",
   description: "国产剧、欧美剧、日剧、韩剧、动画、纪录片",
   author: "Forward",
-  version: "1.4.1",
+  version: "1.4.2",
   requiredVersion: "0.0.1",
   site: "https://github.com/InchStudio/ForwardWidgets",
 
@@ -190,6 +190,13 @@ async function loadDoubanExplore(params = {}) {
     });
 
     const results = (await Promise.all(promises)).filter(Boolean);
+
+    // 对返回的结果默认进行时间降序排序
+    results.sort((a, b) => {
+      const dateA = a.releaseDate || "";
+      const dateB = b.releaseDate || "";
+      return dateB.localeCompare(dateA);
+    });
 
     // 如果列表全空，展示错误和调试日志
     if (results.length === 0) {
