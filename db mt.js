@@ -9,7 +9,7 @@ WidgetMetadata = {
 
   modules: [
     {
-      title: "",
+      title: "剧集 动画 纪录片",
       description: "豆瓣最近热门剧集 动画 纪录片",
       functionName: "loadDoubanExplore",
       type: "video",
