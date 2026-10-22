@@ -3,9 +3,6 @@
 "description":"流媒体平台/电影出品商LOGO图集", 
 "icons":
     [ 
-
-
-
     {"name":"Peach", "url":"https://emby-icon.vercel.app/icons/Peach.PNG"},
     {"name":"Peach_1", "url":"https://emby-icon.vercel.app/icons/Peach1.PNG"},
     {"name":"Terminus", "url":"https://emby-icon.vercel.app/icons/Terminus.PNG"},
@@ -226,13 +223,6 @@
     {"name":"悬疑", "url":"https://raw.githubusercontent.com/xiyuliu509/Player-Icon/refs/heads/master/Logo/XY.png"},
     {"name":"犯罪", "url":"https://raw.githubusercontent.com/xiyuliu509/Player-Icon/refs/heads/master/Logo/FZ.png"},
     {"name":"剧情", "url":"https://raw.githubusercontent.com/xiyuliu509/Player-Icon/refs/heads/master/Logo/JQ.png"},
-    {"name":"纪录片", "url":"https://raw.githubusercontent.com/xiyuliu509/Player-Icon/refs/heads/master/Logo/JL.png"},
-
-
-
-
-        
-        
-    
+    {"name":"纪录片", "url":"https://raw.githubusercontent.com/xiyuliu509/Player-Icon/refs/heads/master/Logo/JL.png"}
     ]
 }
