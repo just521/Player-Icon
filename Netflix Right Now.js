@@ -12,7 +12,7 @@
 WidgetMetadata = {
   id: "forward.netflix_right_now",
   title: "Netflix Right Now 热门榜",
-  version: "4.0.0",
+  version: "1.0.0",
   requiredVersion: "0.0.1",
   description:
     "抓取 whats-on-netflix.com 的 Right now 榜单，合并 Movies 与 TV series，仅保留 Netflix 热度值 ≥ 90 的条目，再按热度混合排序（默认从高到低）",
@@ -58,6 +58,8 @@ const PAGE_SIZE = 20;
 const MIN_POINTS = 90;
 // 同名作品靠“是否在 Netflix 上架”来消歧时使用的 provider id（TMDB 里 Netflix 固定为 8）
 const NETFLIX_PROVIDER_ID = 8;
+// TMDB 里 Netflix 作为“网络”的 id，对应 https://www.themoviedb.org/network/213-netflix
+const NETFLIX_NETWORK_ID = 213;
 const CHART_TTL_MS = 10 * 60 * 1000;
 const TYPE_LABEL = { movie: "电影", tv: "剧集" };
 const TYPE_BADGE = { movie: "🎬", tv: "📺" };
@@ -67,6 +69,7 @@ const UA =
 let chartMemo = { time: 0, items: [], chartDate: "" };
 const tmdbMemo = Object.create(null);
 const providerMemo = Object.create(null);
+const networkMemo = Object.create(null);
 
 async function loadList(params = {}) {
   try {
@@ -301,11 +304,13 @@ async function tmdbSearch(query, entry, language) {
 /*
  * 同名作品在 TMDB 上经常有好几部（The Trap / Below / Blackout 这类通用名尤甚），
  * 只按 popularity + vote_count 排序，几乎必然选到“最出名的那一部”，而不是榜单上这一部。
- * 现在按三层信号收敛：
+ * 现在按四层信号收敛：
  *   1) 片名：完全相同(1000) > 前缀相同(300) > 共享实词(100)，完全无关的直接丢掉；
  *   2) 时间：榜单是“此刻”，候选的播出/上映年份越接近榜单日期越可能是同一部；
- *   3) 上架：片名完全相同的候选之间，用 watch/providers 查它是否真的在 Netflix 上，
- *      在架者优先——能上 Netflix 榜单的作品，本来就该在 Netflix 上可以看到。
+ *   3) 归属：片名完全相同的候选之间，先查它是否属于 TMDB 的 Netflix 网络
+ *      （network/213，即 https://www.themoviedb.org/network/213-netflix 里的作品），
+ *      是则直接采用——榜单上的剧本来就是 Netflix 的剧；
+ *   4) 上架：仍不确定时再用 watch/providers 查它是否在 Netflix 上架，在架者优先。
  */
 async function pickBestMatch(results, wantedTitle, entry) {
   if (!results || results.length === 0) return null;
@@ -322,16 +327,23 @@ async function pickBestMatch(results, wantedTitle, entry) {
 
   if (ranked.length === 0) return null;
 
-  // 只有“片名完全一致”的多个候选才值得多花几次请求去查上架情况
+  // 只有“片名完全一致”的多个候选才值得多花几次请求去做归属/上架核实
   const exact = ranked.filter((candidate) => candidate.exact);
   if (exact.length > 1) {
-    const verified = [];
-    for (const candidate of exact.slice(0, 3)) {
-      if (await isOnNetflix(candidate.result.id, entry.mediaType)) verified.push(candidate);
+    const pool = exact.slice(0, 4);
+
+    // 3) 先看它是不是 TMDB 里 Netflix 网络（network/213）的作品
+    for (const candidate of pool) {
+      if (await isNetflixNetwork(candidate.result.id, entry.mediaType)) {
+        return candidate.result;
+      }
     }
-    if (verified.length > 0) {
-      // verified 已按分数排序：同年份内热度高、票数多的在前
-      return verified[0].result;
+
+    // 4) 再看它有没有在 Netflix 上架（电影没有“网络”字段，只能靠这一层）
+    for (const candidate of pool) {
+      if (await isOnNetflix(candidate.result.id, entry.mediaType)) {
+        return candidate.result;
+      }
     }
   }
 
@@ -371,6 +383,26 @@ function scoreCandidate(result, target, targetTokens, chartYear) {
   const votes = Math.min(50, Number(result.vote_count) || 0) / 200;
 
   return { result, score: titleScore + recency + popularity + votes, exact: titleScore >= 1000 };
+}
+
+async function isNetflixNetwork(id, mediaType) {
+  // 网络（network）只存在于剧集，电影没有这个字段
+  if (mediaType !== "tv") return false;
+
+  const key = "network||" + id;
+  if (key in networkMemo) return networkMemo[key];
+
+  let hit = false;
+  try {
+    const detail = await Widget.tmdb.get(`tv/${id}`, { params: {} });
+    const networks = (detail && detail.networks) || [];
+    hit = networks.some((network) => Number(network && network.id) === NETFLIX_NETWORK_ID);
+  } catch (error) {
+    console.error("[isNetflixNetwork] 查询归属失败:", id, error.message || error);
+  }
+
+  networkMemo[key] = hit;
+  return hit;
 }
 
 async function isOnNetflix(id, mediaType) {
