@@ -11,7 +11,7 @@
 WidgetMetadata = {
   id: "forward.douban_popular_movies",
   title: "豆瓣热门电影",
-  version: "2.0.0",
+  version: "2.0.1",
   requiredVersion: "0.0.1",
   description: "豆瓣热门电影 · 全部：只取前五页共 100 个片名，封面/评分/简介用 TMDB 匹配",
   author: "Forward",
