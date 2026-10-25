@@ -11,15 +11,15 @@
 WidgetMetadata = {
   id: "forward.douban_popular_movies",
   title: "豆瓣热门电影",
-  version: "2.0.1",
+  version: "2.0.2",
   requiredVersion: "0.0.1",
-  description: "豆瓣热门电影 · 全部：只取前五页共 100 个片名，封面/评分/简介用 TMDB 匹配",
+  description: "豆瓣热门电影|100",
   author: "Forward",
   site: "https://movie.douban.com/explore",
   modules: [
     {
       id: "douban_popular_movies",
-      title: "热门电影（全部 · 前五页）",
+      title: "热门电影",
       functionName: "loadList",
       cacheDuration: 1800,
       params: [{ name: "page", title: "页码", type: "page", startPage: 1 }]
