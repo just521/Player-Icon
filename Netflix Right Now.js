@@ -14,7 +14,8 @@ WidgetMetadata = {
   title: "Netflix Right Now 热门榜",
   version: "1.0.0",
   requiredVersion: "0.0.1",
-  description: "抓取 whats-on-netflix.com 的 Right now 榜单，合并 Movies 与 TV series，按 Netflix 热度值混合排序（默认从高到低）",
+  description:
+    "抓取 whats-on-netflix.com 的 Right now 榜单，合并 Movies 与 TV series，仅保留 Netflix 热度值 ≥ 90 的条目，再按热度混合排序（默认从高到低）",
   author: "Forward",
   site: "https://www.whats-on-netflix.com/most-popular/",
   modules: [
@@ -53,6 +54,8 @@ WidgetMetadata = {
 
 const CHART_URL = "https://www.whats-on-netflix.com/most-popular/";
 const PAGE_SIZE = 20;
+// 只保留 Netflix 热度值达到该阈值的条目：低热度长尾既没有代表性，TMDB 也大多搜不到
+const MIN_POINTS = 90;
 const CHART_TTL_MS = 10 * 60 * 1000;
 const TYPE_LABEL = { movie: "电影", tv: "剧集" };
 const TYPE_BADGE = { movie: "🎬", tv: "📺" };
@@ -75,6 +78,7 @@ async function loadList(params = {}) {
     if (mediaType === "movie" || mediaType === "tv") {
       items = items.filter((item) => item.mediaType === mediaType);
     }
+    items = items.filter((item) => item.points >= MIN_POINTS);
     sortChartItems(items, sortMode);
 
     const start = (page - 1) * PAGE_SIZE;
