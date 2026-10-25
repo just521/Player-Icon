@@ -2,7 +2,7 @@
  * 豆瓣热门电影（TMDB 匹配）
  *
  * 数据源：https://movie.douban.com/explore?support_type=movie&is_all=false&category=热门&type=全部
- * 固定使用该页面的默认榜单：热门电影 → 全部，只保留前两页共 40 条。
+ * 固定使用该页面的默认榜单：热门电影 → 全部，加载前五页共 100 条。
  *
  * 按需求只从豆瓣抓取片名，封面、横图、评分、上映日期、简介等全部通过 TMDB 搜索匹配，
  * 返回 type: "tmdb" 的 VideoItem，可直接使用 App 内置的 TMDB 详情页。
@@ -13,13 +13,13 @@ WidgetMetadata = {
   title: "豆瓣热门电影",
   version: "2.0.0",
   requiredVersion: "0.0.1",
-  description: "豆瓣热门电影 · 全部：只取前两页共 40 个片名，封面/评分/简介用 TMDB 匹配",
+  description: "豆瓣热门电影 · 全部：只取前五页共 100 个片名，封面/评分/简介用 TMDB 匹配",
   author: "Forward",
   site: "https://movie.douban.com/explore",
   modules: [
     {
       id: "douban_popular_movies",
-      title: "热门电影（全部 · 前两页）",
+      title: "热门电影（全部 · 前五页）",
       functionName: "loadList",
       cacheDuration: 1800,
       params: [{ name: "page", title: "页码", type: "page", startPage: 1 }]
@@ -31,7 +31,7 @@ const API = "https://m.douban.com/rexxar/api/v2/subject/recent_hot/movie";
 const CATEGORY = "热门";
 const TYPE = "全部";
 const PAGE_SIZE = 20;
-const MAX_PAGES = 2;
+const MAX_PAGES = 5;
 const MAX_ITEMS = PAGE_SIZE * MAX_PAGES;
 const UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1";
