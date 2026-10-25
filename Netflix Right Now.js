@@ -12,7 +12,7 @@
 WidgetMetadata = {
   id: "forward.netflix_right_now",
   title: "Netflix Right Now 热门榜",
-  version: "1.0.0",
+  version: "3.0.0",
   requiredVersion: "0.0.1",
   description:
     "抓取 whats-on-netflix.com 的 Right now 榜单，合并 Movies 与 TV series，仅保留 Netflix 热度值 ≥ 90 的条目，再按热度混合排序（默认从高到低）",
